@@ -1,0 +1,15 @@
+{
+  "/page": "app/page.js",
+  "/suppliers/page": "app/suppliers/page.js",
+  "/items/page": "app/items/page.js",
+  "/suppliers/[id]/page": "app/suppliers/[id]/page.js",
+  "/customers/page": "app/customers/page.js",
+  "/api/dashboard/route": "app/api/dashboard/route.js",
+  "/api/suppliers/route": "app/api/suppliers/route.js",
+  "/api/documents/expiring/route": "app/api/documents/expiring/route.js",
+  "/suppliers/new/page": "app/suppliers/new/page.js",
+  "/receiving/page": "app/receiving/page.js",
+  "/shipping/page": "app/shipping/page.js",
+  "/api/suppliers/[id]/route": "app/api/suppliers/[id]/route.js",
+  "/api/customers/route": "app/api/customers/route.js"
+}

@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model VendorType {
+  id            String     @id @default(uuid())
+  type_name     String
+  required_docs String     // Comma separated list of required docs
+  description   String?
+  suppliers     Supplier[]
+}
+
+model Supplier {
+  id                String       @id @default(uuid())
+  company_name      String
+  vendor_type_id    String
+  vendor_type       VendorType   @relation(fields: [vendor_type_id], references: [id])
+  contact_name      String?
+  contact_email     String?
+  contact_phone     String?
+  address           String?
+  onboarding_status String       @default("Not Started") // Not Started, In Progress, Complete
+  
+  // Compliance Documents
+  coi_uploaded      Boolean      @default(false)
+  coi_expiry        DateTime?
+  coi_url           String?
+  
+  kosher_uploaded   Boolean      @default(false)
+  kosher_expiry     DateTime?
+  kosher_url        String?
+  
+  sqf_uploaded      Boolean      @default(false)
+  sqf_expiry        DateTime?
+  sqf_url           String?
+  
+  haccp_uploaded    Boolean      @default(false)
+  haccp_expiry      DateTime?
+  haccp_url         String?
+  
+  organic_uploaded  Boolean      @default(false)
+  organic_expiry    DateTime?
+  organic_url       String?
+  
+  halal_uploaded    Boolean      @default(false)
+  halal_expiry      DateTime?
+  halal_url         String?
+  
+  allergen_uploaded Boolean      @default(false)
+  allergen_expiry   DateTime?
+  allergen_url      String?
+  
+  spec_sheet_uploaded Boolean    @default(false)
+  spec_sheet_url      String?
+  
+  w9_uploaded       Boolean      @default(false)
+  w9_url            String?
+  
+  compliance_score  Int          @default(0)
+  drive_folder_link String?
+  notes             String?
+
+  items             Item[]
+  inbound_pos       InboundPO[]
+}
+
+model Customer {
+  id               String             @id @default(uuid())
+  customer_name    String
+  contact_name     String?
+  contact_email    String?
+  contact_phone    String?
+  billing_address  String?
+  shipping_address String?
+  notes            String?
+  shipments        OutboundShipment[]
+}
+
+model Item {
+  id                String   @id @default(uuid())
+  sku               String
+  item_name         String
+  supplier_id       String
+  supplier          Supplier @relation(fields: [supplier_id], references: [id])
+  spec_sheet_url    String?
+  allergen_cert_url String?
+}
+
+model InboundPO {
+  id                    String    @id @default(uuid())
+  po_number             String
+  supplier_id           String?
+  supplier              Supplier? @relation(fields: [supplier_id], references: [id])
+  supplier_name         String?   // Fallback if no linked supplier
+  receive_date          DateTime  @default(now())
+  shipper_name          String?
+  approved_vendor       String?   // Yes/No
+  trucking_company      String?
+  product_name          String?
+  pallet_count          Int?
+  bol_quantity_match    String?   // YES/NO
+  quantity_mismatch_notes String?
+  lot_numbers           String?
+  
+  // Truck Checks
+  truck_damage_check    String?   // YES/NO
+  truck_odor_check      String?   // YES/NO
+  truck_clean_check     String?   // YES/NO
+  
+  // Special Handling
+  is_gluten_test_item   Boolean   @default(false)
+  gluten_test_product   String?
+  gluten_test_kit_lot   String?
+  is_non_gmo            String?   // Yes/No/N/A
+  non_gmo_sticker_placed String?  // Yes/No
+  contains_allergen     String?   // Yes/No/N/A
+  allergen_sticker_placed String? // Yes/No
+  
+  received_by           String?
+  reviewed_by           String?
+  signature_url         String?
+  
+  bol_url               String?
+  coa_url               String?
+  invoice_url           String?
+  receiving_docs_url    String?
+  
+  status                String    @default("Pending") // Pending, Complete
+  notes                 String?
+}
+
+model OutboundShipment {
+  id                  String    @id @default(uuid())
+  customer_id         String?
+  customer            Customer? @relation(fields: [customer_id], references: [id])
+  customer_name       String?   // Fallback
+  customer_po         String
+  ship_datetime       DateTime  @default(now())
+  shipper_name        String?
+  shipped_to          String?
+  trucking_company    String?
+  product_name        String?
+  pallet_count        Int?
+  bol_quantity_match  String?   // YES/NO
+  lot_numbers         String?
+  
+  // Truck Checks
+  truck_damage_check  String?   // YES/NO
+  truck_odor_check    String?   // YES/NO
+  truck_clean_check   String?   // YES/NO
+  
+  seal_number         String?
+  contains_allergen   String?   // Yes/No/N/A
+  shipped_by          String?
+  signature_url       String?
+  
+  bol_url             String?
+  invoice_url         String?
+  packing_list_url    String?
+  coa_url             String?
+  truck_inspection_url String?
+  tracking_number     String?
+  
+  status              String    @default("Pending") // Pending, In Transit, Delivered, Complete
+  notes               String?
+}

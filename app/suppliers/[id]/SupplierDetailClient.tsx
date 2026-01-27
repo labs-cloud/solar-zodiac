@@ -56,9 +56,8 @@ export default function SupplierDetailClient({ supplier: initialSupplier, pos, s
 
             if (response.ok) {
                 alert(`${documentType} uploaded successfully!`);
-                // Refresh supplier data locally or re-fetch
-                // For now, simpler to reload page or just alert
-                location.reload();
+                // Refresh supplier data
+                router.refresh();
             } else {
                 alert(`Failed to upload ${documentType}`);
             }

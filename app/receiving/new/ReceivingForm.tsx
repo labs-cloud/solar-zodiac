@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
@@ -21,9 +21,10 @@ interface ReceivingFormProps {
 export default function ReceivingForm({ suppliers }: ReceivingFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [isClient, setIsClient] = useState(false);
     const [formData, setFormData] = useState({
-        receive_date: new Date().toISOString().split('T')[0],
-        receive_time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        receive_date: '',
+        receive_time: '',
         shipper_name: '',
         supplier_id: '',
         trucking_company: '',
@@ -42,6 +43,15 @@ export default function ReceivingForm({ suppliers }: ReceivingFormProps) {
         received_by: '',
         reviewed_by: ''
     });
+
+    useEffect(() => {
+        setIsClient(true);
+        setFormData(prev => ({
+            ...prev,
+            receive_date: new Date().toISOString().split('T')[0],
+            receive_time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+        }));
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;

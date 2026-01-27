@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
@@ -21,9 +21,10 @@ interface ShippingFormProps {
 export default function ShippingForm({ customers }: ShippingFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [isClient, setIsClient] = useState(false);
     const [formData, setFormData] = useState({
-        ship_datetime: new Date().toISOString().split('T')[0],
-        ship_time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        ship_datetime: '',
+        ship_time: '',
         customer_id: '',
         customer_po: '',
         shipper_name: '',
@@ -42,6 +43,15 @@ export default function ShippingForm({ customers }: ShippingFormProps) {
         reviewed_by: ''
         // No signature_url upload implemented yet, just text name for simplicity or separate upload step
     });
+
+    useEffect(() => {
+        setIsClient(true);
+        setFormData(prev => ({
+            ...prev,
+            ship_datetime: new Date().toISOString().split('T')[0],
+            ship_time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+        }));
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;

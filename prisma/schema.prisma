@@ -116,6 +116,7 @@ model InboundPO {
   is_gluten_test_item   Boolean   @default(false)
   gluten_test_product   String?
   gluten_test_kit_lot   String?
+  gluten_test_expiry    DateTime?
   is_non_gmo            String?   // Yes/No/N/A
   non_gmo_sticker_placed String?  // Yes/No
   contains_allergen     String?   // Yes/No/N/A
@@ -157,6 +158,7 @@ model OutboundShipment {
   seal_number         String?
   contains_allergen   String?   // Yes/No/N/A
   shipped_by          String?
+  reviewed_by         String?
   signature_url       String?
   
   bol_url             String?

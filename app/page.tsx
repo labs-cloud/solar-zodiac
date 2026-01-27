@@ -91,7 +91,8 @@ export default function Home() {
     // Mini donut calcs
     const miniCircumference = 2 * Math.PI * 28; // r=28
 
-    const compliantCount = Math.max(0, metrics.totalSuppliers - metrics.expiredDocsCount - metrics.expiringDocsCount);
+    // Recalculate compliant metrics based on actual supplier scores
+    const compliantCount = suppliers.filter(s => s.compliance_score >= 80).length;
     const compliantPct = metrics.totalSuppliers > 0 ? Math.round((compliantCount / metrics.totalSuppliers) * 100) : 0;
     const expiringPct = metrics.totalSuppliers > 0 ? Math.round((metrics.expiringDocsCount / metrics.totalSuppliers) * 100) : 0;
     const expiredPct = metrics.totalSuppliers > 0 ? Math.round((metrics.expiredDocsCount / metrics.totalSuppliers) * 100) : 0;
@@ -136,7 +137,7 @@ export default function Home() {
                                     <circle className="ring-segment" cx="170" cy="170" r="146"
                                         stroke="var(--green)"
                                         strokeDasharray={circumference}
-                                        strokeDashoffset={compliantOffset}
+                                        strokeDashoffset={circumference * (1 - metrics.avgCompliance / 100)}
                                         style={{ transition: 'stroke-dashoffset 1s ease' }}
                                     />
                                 </svg>
@@ -148,7 +149,7 @@ export default function Home() {
                         </div>
 
                         <div className="mini-rings">
-                            <div className="mini-ring-item" onClick={() => router.push('/suppliers')}>
+                            <div className="mini-ring-item" onClick={() => router.push('/suppliers?status=compliant')}>
                                 <div className="mini-ring">
                                     <svg viewBox="0 0 64 64">
                                         <circle className="mini-ring-bg" cx="32" cy="32" r="28" />
@@ -218,7 +219,7 @@ export default function Home() {
                         </div>
                         <div className="swipe-container" ref={scrollRef}>
                             <div className="swipe-track">
-                                {suppliers.map((supplier) => {
+                                {(suppliers || []).map((supplier) => {
                                     let statusClass = 'compliant';
                                     if (supplier.compliance_score < 50) statusClass = 'expired';
                                     else if (supplier.compliance_score < 80) statusClass = 'expiring';
@@ -255,9 +256,9 @@ export default function Home() {
                             <h2 className="section-title">Expiring Timeline (Next 60 Days)</h2>
                         </div>
                         <div className="timeline">
-                            {expiringDocs.length === 0 ? (
+                            {(expiringDocs || []).length === 0 ? (
                                 <p style={{ color: 'var(--text-3)', padding: '20px' }}>No documents expiring soon.</p>
-                            ) : expiringDocs.map((doc, idx) => {
+                            ) : (expiringDocs || []).map((doc, idx) => {
                                 let statusClass = 'warning';
                                 if (doc.days < 0) statusClass = 'expired';
                                 else if (doc.days < 14) statusClass = 'critical';

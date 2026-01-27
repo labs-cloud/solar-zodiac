@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
@@ -9,7 +9,7 @@ import { Table } from '@/components/Table';
 import { Badge } from '@/components/Badge';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Supplier {
     id: string;
@@ -20,8 +20,11 @@ interface Supplier {
     contact_name: string | null;
 }
 
-export default function SuppliersPage() {
+function SuppliersContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const statusParam = searchParams.get('status');
+
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState('All');
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -43,10 +46,13 @@ export default function SuppliersPage() {
         }
     };
 
-    const filteredData = suppliers.filter(s =>
-        s.company_name.toLowerCase().includes(search.toLowerCase()) &&
-        (filterType === 'All' || s.vendor_type.type_name === filterType)
-    );
+    const filteredData = suppliers.filter(s => {
+        const matchesSearch = s.company_name.toLowerCase().includes(search.toLowerCase());
+        const matchesType = filterType === 'All' || s.vendor_type.type_name === filterType;
+        const matchesStatus = statusParam === 'compliant' ? s.compliance_score >= 80 : true;
+
+        return matchesSearch && matchesType && matchesStatus;
+    });
 
     const columns = [
         { header: 'Company Name', accessor: 'company_name' as const, className: 'font-bold' },
@@ -81,66 +87,72 @@ export default function SuppliersPage() {
 
     if (loading) {
         return (
-            <DashboardLayout>
-                <div className="flex items-center justify-center" style={{ minHeight: '400px' }}>
-                    <p>Loading suppliers...</p>
-                </div>
-            </DashboardLayout>
+            <div className="flex items-center justify-center" style={{ minHeight: '400px' }}>
+                <p>Loading suppliers...</p>
+            </div>
         );
     }
 
     return (
-        <DashboardLayout>
-            <div className="flex flex-col gap-md">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <div className="flex items-center gap-sm">
-                            <h1 className="text-2xl font-bold">Suppliers</h1>
-                            <div style={{
-                                backgroundColor: 'var(--color-primary)',
-                                color: 'white',
-                                padding: '4px 12px',
-                                borderRadius: '999px',
-                                fontWeight: 'bold',
-                                fontSize: '1.25rem',
-                                minWidth: '40px',
-                                textAlign: 'center'
-                            }}>
-                                {suppliers.length}
-                            </div>
+        <div className="flex flex-col gap-md">
+            <div className="flex justify-between items-center">
+                <div>
+                    <div className="flex items-center gap-sm">
+                        <h1 className="text-2xl font-bold">Suppliers</h1>
+                        <div style={{
+                            backgroundColor: 'var(--color-primary)',
+                            color: 'white',
+                            padding: '4px 12px',
+                            borderRadius: '999px',
+                            fontWeight: 'bold',
+                            fontSize: '1.25rem',
+                            minWidth: '40px',
+                            textAlign: 'center'
+                        }}>
+                            {suppliers.length}
                         </div>
-                        <p className="text-muted">Manage your approved vendor list and compliance status.</p>
                     </div>
-                    <Link href="/suppliers/new">
-                        <Button><Plus size={16} style={{ marginRight: '8px' }} /> Add Supplier</Button>
-                    </Link>
+                    <p className="text-muted">Manage your approved vendor list and compliance status.</p>
+                </div>
+                <Link href="/suppliers/new">
+                    <Button><Plus size={16} style={{ marginRight: '8px' }} /> Add Supplier</Button>
+                </Link>
+            </div>
+
+            <Card>
+                <div className="flex justify-between items-center" style={{ marginBottom: '24px' }}>
+                    <div style={{ width: '300px' }}>
+                        <Input
+                            placeholder="Search suppliers..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            style={{ margin: 0 }}
+                        />
+                    </div>
+                    <div className="flex gap-sm">
+                        <Button variant="secondary" onClick={() => setFilterType('All')}>All</Button>
+                        <Button variant="secondary" onClick={() => setFilterType('Ingredient')}>Ingredients</Button>
+                        <Button variant="secondary" onClick={() => setFilterType('Packaging')}>Packaging</Button>
+                        <Button variant="secondary" onClick={() => setFilterType('Logistics')}>Logistics</Button>
+                    </div>
                 </div>
 
-                <Card>
-                    <div className="flex justify-between items-center" style={{ marginBottom: '24px' }}>
-                        <div style={{ width: '300px' }}>
-                            <Input
-                                placeholder="Search suppliers..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                style={{ margin: 0 }}
-                            />
-                        </div>
-                        <div className="flex gap-sm">
-                            <Button variant="secondary" onClick={() => setFilterType('All')}>All</Button>
-                            <Button variant="secondary" onClick={() => setFilterType('Ingredient')}>Ingredients</Button>
-                            <Button variant="secondary" onClick={() => setFilterType('Packaging')}>Packaging</Button>
-                            <Button variant="secondary" onClick={() => setFilterType('Logistics')}>Logistics</Button>
-                        </div>
-                    </div>
+                <Table
+                    data={filteredData}
+                    columns={columns}
+                    onRowClick={(item) => router.push(`/suppliers/${item.id}`)}
+                />
+            </Card>
+        </div>
+    );
+}
 
-                    <Table
-                        data={filteredData}
-                        columns={columns}
-                        onRowClick={(item) => router.push(`/suppliers/${item.id}`)}
-                    />
-                </Card>
-            </div>
+export default function SuppliersPage() {
+    return (
+        <DashboardLayout>
+            <Suspense fallback={<div>Loading...</div>}>
+                <SuppliersContent />
+            </Suspense>
         </DashboardLayout>
     );
 }

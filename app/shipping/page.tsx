@@ -2,6 +2,9 @@ import React from 'react';
 import { prisma } from '@/lib/prisma';
 import ShippingClient from './ShippingClient';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0];
 };

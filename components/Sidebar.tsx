@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
 import { LayoutDashboard, Users, UserCircle, Download, Upload, FileText, AlertTriangle } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -17,6 +18,10 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
     const pathname = usePathname();
+    const { data: session } = useSession();
+
+    const user = session?.user;
+    const initials = user?.email?.substring(0, 2).toUpperCase() || 'AD';
 
     return (
         <aside style={{
@@ -66,15 +71,30 @@ export function Sidebar() {
             </nav>
 
             <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.8, marginBottom: '12px' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 'bold' }}>AD</span>
+                        <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{initials}</span>
                     </div>
-                    <div>
-                        <p style={{ fontSize: '14px', margin: 0 }}>Admin User</p>
-                        <p style={{ fontSize: '12px', margin: 0, opacity: 0.7 }}>admin@snackatere.com</p>
+                    <div style={{ overflow: 'hidden' }}>
+                        <p style={{ fontSize: '14px', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'Admin User'}</p>
+                        <p style={{ fontSize: '12px', margin: 0, opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email || 'Loading...'}</p>
                     </div>
                 </div>
+                <button
+                    onClick={() => signOut()}
+                    style={{
+                        width: '100%',
+                        padding: '8px',
+                        background: 'rgba(255,255,255,0.1)',
+                        border: 'none',
+                        color: 'white',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem'
+                    }}
+                >
+                    Sign Out
+                </button>
             </div>
         </aside>
     );

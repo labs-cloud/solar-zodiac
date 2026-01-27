@@ -172,3 +172,13 @@ model OutboundShipment {
   status              String    @default("Pending") // Pending, In Transit, Delivered, Complete
   notes               String?
 }
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("USER") // USER, ADMIN
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

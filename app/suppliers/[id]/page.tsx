@@ -39,9 +39,21 @@ export default async function SupplierDetailPage({ params }: { params: { id: str
         }
     });
 
+    // Serialize Supplier Data (specifically Date objects)
+    const serializedSupplier = {
+        ...supplier,
+        coi_expiry: supplier.coi_expiry?.toISOString() || null,
+        kosher_expiry: supplier.kosher_expiry?.toISOString() || null,
+        sqf_expiry: supplier.sqf_expiry?.toISOString() || null,
+        haccp_expiry: supplier.haccp_expiry?.toISOString() || null,
+        organic_expiry: supplier.organic_expiry?.toISOString() || null,
+        halal_expiry: supplier.halal_expiry?.toISOString() || null,
+        allergen_expiry: supplier.allergen_expiry?.toISOString() || null,
+    };
+
     return (
         <SupplierDetailClient
-            supplier={supplier}
+            supplier={serializedSupplier}
             pos={inboundPos.map(p => ({
                 ...p,
                 receive_date: p.receive_date.toISOString(), // Serialize dates

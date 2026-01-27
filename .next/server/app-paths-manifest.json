@@ -1,0 +1,9 @@
+{
+  "/receiving/page": "app/receiving/page.js",
+  "/suppliers/page": "app/suppliers/page.js",
+  "/receiving/[id]/page": "app/receiving/[id]/page.js",
+  "/shipping/new/page": "app/shipping/new/page.js",
+  "/api/suppliers/route": "app/api/suppliers/route.js",
+  "/suppliers/[id]/page": "app/suppliers/[id]/page.js",
+  "/receiving/new/page": "app/receiving/new/page.js"
+}

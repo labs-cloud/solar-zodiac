@@ -40,6 +40,10 @@ export default function CustomerDetailClient({ customer }: { customer: Customer 
 
                 <div className="flex justify-between items-start mb-6">
                     <h1 className="text-3xl font-bold">{customer.customer_name}</h1>
+                    <div className="flex gap-2">
+                        <Button variant="secondary" onClick={() => alert('Editing customer details (Simulated)')}>Edit Details</Button>
+                        <Button onClick={() => router.push('/shipping/new')}>New Shipment</Button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

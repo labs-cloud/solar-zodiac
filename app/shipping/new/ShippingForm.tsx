@@ -84,7 +84,14 @@ export default function ShippingForm({ customers }: ShippingFormProps) {
                     <ArrowLeft size={16} className="mr-2" /> Back
                 </Button>
 
-                <h1 className="text-2xl font-bold mb-6">New Shipping Record</h1>
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold">New Shipping Record</h1>
+                    <Button variant="secondary" onClick={() => {
+                        alert('Simple Export: To enable real export, we would generate a CSV from the formData or current view.');
+                    }}>
+                        Export Log
+                    </Button>
+                </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-6">

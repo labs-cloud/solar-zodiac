@@ -91,6 +91,32 @@ export default function ItemsPage() {
         i.sku.toLowerCase().includes(search.toLowerCase())
     );
 
+    // Edit State
+    const [editingItem, setEditingItem] = useState<Item | null>(null);
+
+    const handleEdit = (item: Item) => {
+        setEditingItem(item);
+        setNewItem({
+            sku: item.sku,
+            item_name: item.item_name,
+            supplier_id: item.supplier_id
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleSaveItem = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (editingItem) {
+            alert(`Updated ${newItem.item_name} (Simulated)`);
+            setIsModalOpen(false);
+            setEditingItem(null);
+            return;
+        }
+
+        handleCreateItem(e);
+    };
+
     const columns = [
         { header: 'SKU', accessor: 'sku' as const, className: 'font-bold' },
         { header: 'Item Name', accessor: 'item_name' as const },
@@ -116,7 +142,10 @@ export default function ItemsPage() {
             header: 'Allergen Cert',
             accessor: (item: Item) => item.allergen_cert_url ? <CheckCircle size={20} color="var(--color-success)" /> : <span className="text-muted">-</span>
         },
-        { header: 'Actions', accessor: () => <Button size="sm" variant="secondary">Edit</Button> },
+        {
+            header: 'Actions',
+            accessor: (item: Item) => <Button size="sm" variant="secondary" onClick={() => handleEdit(item)}>Edit</Button>
+        },
     ];
 
     return (
@@ -127,9 +156,16 @@ export default function ItemsPage() {
                         <h1 className="text-2xl font-bold">Items Master</h1>
                         <p className="text-muted">Manage raw materials and packaging items.</p>
                     </div>
-                    <Button onClick={() => setIsModalOpen(true)}>
-                        <Plus size={16} style={{ marginRight: '8px' }} /> Add Item
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="secondary" onClick={() => alert('Exporting Item Master...')}>Export CSV</Button>
+                        <Button onClick={() => {
+                            setEditingItem(null);
+                            setNewItem({ sku: '', item_name: '', supplier_id: '' });
+                            setIsModalOpen(true);
+                        }}>
+                            <Plus size={16} style={{ marginRight: '8px' }} /> Add Item
+                        </Button>
+                    </div>
                 </div>
 
                 <Card>
@@ -163,13 +199,13 @@ export default function ItemsPage() {
                             width: '400px', maxWidth: '90%'
                         }}>
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold">Add New Item</h3>
+                                <h3 className="text-lg font-bold">{editingItem ? 'Edit Item' : 'Add New Item'}</h3>
                                 <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                                     <X size={20} />
                                 </button>
                             </div>
 
-                            <form onSubmit={handleCreateItem} className="flex flex-col gap-4">
+                            <form onSubmit={handleSaveItem} className="flex flex-col gap-4">
                                 <Input
                                     label="SKU"
                                     value={newItem.sku}
@@ -199,7 +235,7 @@ export default function ItemsPage() {
 
                                 <div className="flex justify-end gap-2 mt-4">
                                     <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                                    <Button type="submit" variant="primary">Create Item</Button>
+                                    <Button type="submit" variant="primary">{editingItem ? 'Save Changes' : 'Create Item'}</Button>
                                 </div>
                             </form>
                         </div>

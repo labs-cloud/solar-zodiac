@@ -40,6 +40,10 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // Header State
+    const [activeSearch, setActiveSearch] = useState(false);
+    const [activeNotif, setActiveNotif] = useState(false);
+
     useEffect(() => {
         fetchDashboardData();
     }, []);
@@ -108,7 +112,7 @@ export default function Home() {
 
                 <div className="app-container">
                     {/* Header */}
-                    <header className="header">
+                    <header className="header" style={{ position: 'relative' }}>
                         <div className="logo">
                             <div className="logo-ring">
                                 <div className="logo-inner">S</div>
@@ -118,12 +122,67 @@ export default function Home() {
                                 <span>Compliance Hub</span>
                             </div>
                         </div>
-                        <div className="header-actions">
-                            <button className="btn-circle"><Search size={20} /></button>
-                            <button className="btn-circle"><Bell size={20} /></button>
+                        <div className="header-actions" style={{ position: 'relative' }}>
+                            <button className="btn-circle" onClick={() => setActiveSearch(!activeSearch)}><Search size={20} /></button>
+                            <button className="btn-circle" onClick={() => setActiveNotif(!activeNotif)}>
+                                <Bell size={20} />
+                                {metrics.expiredDocsCount > 0 && (
+                                    <div style={{ position: 'absolute', top: 0, right: 0, width: '12px', height: '12px', background: 'var(--red)', borderRadius: '50%', border: '2px solid var(--surface)' }} />
+                                )}
+                            </button>
                             <Link href="/suppliers/new">
                                 <button className="btn-pill"><Plus size={16} /> Add Supplier</button>
                             </Link>
+
+                            {/* Search Dropdown */}
+                            {activeSearch && (
+                                <div style={{
+                                    position: 'absolute', top: '100%', right: '100px', width: '300px', background: 'var(--surface)',
+                                    border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', zIndex: 100, marginTop: '8px',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                                }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Search suppliers, items..."
+                                        className="w-full bg-black/20 border border-gray-700 rounded p-2 text-white mb-2 focus:outline-none focus:border-indigo-500"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                router.push(`/suppliers?search=${(e.target as HTMLInputElement).value}`);
+                                            }
+                                        }}
+                                    />
+                                    <div className="flex flex-col gap-2">
+                                        <div className="text-xs text-muted uppercase">Quick Links</div>
+                                        <Link href="/suppliers" className="text-sm hover:text-indigo-400">All Suppliers</Link>
+                                        <Link href="/items" className="text-sm hover:text-indigo-400">Item Master</Link>
+                                        <Link href="/customers" className="text-sm hover:text-indigo-400">Customers</Link>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Notifications Dropdown */}
+                            {activeNotif && (
+                                <div style={{
+                                    position: 'absolute', top: '100%', right: '50px', width: '320px', background: 'var(--surface)',
+                                    border: '1px solid var(--border)', borderRadius: '12px', padding: '0', zIndex: 100, marginTop: '8px',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)', overflow: 'hidden'
+                                }}>
+                                    <div className="p-3 border-b border-gray-800 font-bold bg-white/5">Notifications</div>
+                                    <div className="max-h-64 overflow-y-auto">
+                                        {(expiringDocs || []).slice(0, 5).map((doc, idx) => (
+                                            <div key={idx} className="p-3 border-b border-gray-800 hover:bg-white/5 cursor-pointer" onClick={() => router.push(`/suppliers/${doc.vendorId}`)}>
+                                                <div className="text-sm font-bold text-white">{doc.vendor}</div>
+                                                <div className="text-xs text-gray-400">{doc.doc} expiring {doc.days < 0 ? 'AGO' : `in ${doc.days} days`}</div>
+                                            </div>
+                                        ))}
+                                        {(expiringDocs || []).length === 0 && (
+                                            <div className="p-4 text-center text-gray-500 text-sm">No new alerts</div>
+                                        )}
+                                    </div>
+                                    <Link href="/documents/expiring" className="block p-3 text-center text-xs text-indigo-400 hover:bg-white/5">View All Alerts</Link>
+                                </div>
+                            )}
                         </div>
                     </header>
 
@@ -168,7 +227,7 @@ export default function Home() {
                                 <span className="mini-ring-count" style={{ color: 'var(--green)' }}>{compliantCount}</span>
                             </div>
 
-                            <div className="mini-ring-item" onClick={() => router.push('/documents/expiring')}>
+                            <div className="mini-ring-item" onClick={() => router.push('/documents/expiring?filter=30')}>
                                 <div className="mini-ring">
                                     <svg viewBox="0 0 64 64">
                                         <circle className="mini-ring-bg" cx="32" cy="32" r="28" />
@@ -187,7 +246,7 @@ export default function Home() {
                                 <span className="mini-ring-count" style={{ color: 'var(--yellow)' }}>{metrics.expiringDocsCount}</span>
                             </div>
 
-                            <div className="mini-ring-item" onClick={() => router.push('/documents/expiring')}>
+                            <div className="mini-ring-item" onClick={() => router.push('/documents/expiring?filter=expired')}>
                                 <div className="mini-ring">
                                     <svg viewBox="0 0 64 64">
                                         <circle className="mini-ring-bg" cx="32" cy="32" r="28" />
@@ -219,7 +278,7 @@ export default function Home() {
                         </div>
                         <div className="swipe-container" ref={scrollRef}>
                             <div className="swipe-track">
-                                {(suppliers || []).map((supplier) => {
+                                {(suppliers || []).length > 0 ? (suppliers || []).map((supplier) => {
                                     let statusClass = 'compliant';
                                     if (supplier.compliance_score < 50) statusClass = 'expired';
                                     else if (supplier.compliance_score < 80) statusClass = 'expiring';
@@ -230,7 +289,7 @@ export default function Home() {
                                                 <div className="vendor-avatar-inner">{supplier.company_name.substring(0, 1)}</div>
                                             </div>
                                             <div className="vendor-name">{supplier.company_name}</div>
-                                            <div className="vendor-type">{supplier.vendor_type.type_name}</div>
+                                            <div className="vendor-type">{supplier.vendor_type?.type_name || 'Vendor'}</div>
                                             <div className="vendor-stats">
                                                 <div className="vendor-stat">
                                                     <div className={`vendor-stat-value ${statusClass === 'compliant' ? 'green' : statusClass === 'expiring' ? 'yellow' : 'red'}`}>
@@ -239,13 +298,15 @@ export default function Home() {
                                                     <div className="vendor-stat-label">Score</div>
                                                 </div>
                                                 <div className="vendor-stat">
-                                                    <div className="vendor-stat-value">{metrics.pendingPOs > 0 ? Math.floor(Math.random() * 5) + 1 : '-'}</div>
+                                                    <div className="vendor-stat-value">-</div>
                                                     <div className="vendor-stat-label">Active POs</div>
                                                 </div>
                                             </div>
                                         </div>
                                     );
-                                })}
+                                }) : (
+                                    <p className="text-gray-500 p-4">No suppliers found. Add one to get started.</p>
+                                )}
                             </div>
                         </div>
                     </section>
@@ -296,7 +357,7 @@ export default function Home() {
                             <Link href="/items">
                                 <div className="bubble items">
                                     <div className="bubble-value">{metrics.totalSuppliers}</div>
-                                    {/* Using total suppliers as proxy for SKU count logic isn't perfect but visual placeholder */}
+                                    {/* Items count proxy */}
                                     <div className="bubble-label">Vendors</div>
                                 </div>
                             </Link>

@@ -34,7 +34,8 @@ interface WherefourSO {
 
 // Real Service Implementation
 export class WherefourService {
-    private baseUrl = 'https://sandbox.wherefour.com/api/v1';
+    // Verified: Credentials work on Production (my.wherefour.com), not Sandbox
+    private baseUrl = 'https://my.wherefour.com/api/v1';
     private authHeader: string;
 
     constructor() {

@@ -50,7 +50,8 @@ export class WherefourService {
             headers: {
                 'Authorization': this.authHeader,
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'User-Agent': 'SolarZodiac/1.0'
             }
         });
 

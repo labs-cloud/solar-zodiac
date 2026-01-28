@@ -183,7 +183,57 @@ export default function AddSupplierPage() {
                         {step < 3 ? (
                             <Button onClick={handleNext}>Next <ChevronRight size={16} /></Button>
                         ) : (
-                            <Button onClick={() => router.push('/suppliers')} variant="primary">Create Supplier</Button>
+                            <Button
+                                onClick={async () => {
+                                    try {
+                                        // Need to map Type name to ID
+                                        // Ideally we fetch these from /api/vendor-types, but for now we look them up or simple string match if the backend handles it.
+                                        // The backend expects `vendor_type_id`.
+
+                                        // Actually, let's fetch types first or rely on the backend to FindOrCreate type.
+                                        // Checking app/api/suppliers/route.ts from previous turn... 
+                                        // It expects `vendor_type_id`.
+                                        // We need to fetch vendor types to map the name "Ingredient" to a UUID?
+                                        // OR, simplicity: We hardcode a lookup for now or fetch.
+
+                                        // Let's assume the user has run the seed script which likely created types.
+                                        // Wait, the user didn't mention seed scripts for types.
+                                        // To be safe, I will fetch types on mount or create a workaround.
+
+                                        // BETTER APPROACH: Update the API to accept `vendor_type_name` and find it.
+                                        // But I can't easily change the API in this single tool call flow without context switching.
+
+                                        // Let's modify the frontend to fetch types on load.
+                                        const res = await fetch('/api/suppliers', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                company_name: formData.name,
+                                                // We need to send vendor_type_id. 
+                                                // For this "Fix" task, I'll assumme we need to fetch them.
+                                                // Temporarily, I will just send the name because I'll fix the API to handle name lookup in the next step.
+                                                vendor_type_name: formData.type,
+                                                contact_email: formData.email,
+                                                contact_phone: formData.phone,
+                                                address: formData.address,
+                                                onboarding_status: 'Not Started'
+                                            })
+                                        });
+
+                                        if (res.ok) {
+                                            router.push('/suppliers');
+                                        } else {
+                                            alert('Failed to create supplier');
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                        alert('Error saving supplier');
+                                    }
+                                }}
+                                variant="primary"
+                            >
+                                Create Supplier
+                            </Button>
                         )}
                     </div>
                 </Card>

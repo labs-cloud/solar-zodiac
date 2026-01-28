@@ -15,3 +15,23 @@ export async function GET() {
         return NextResponse.json({ error: 'Failed to fetch customers' }, { status: 500 });
     }
 }
+
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+        const customer = await prisma.customer.create({
+            data: {
+                customer_name: body.customer_name,
+                contact_name: body.contact_name,
+                contact_email: body.contact_email,
+                contact_phone: body.contact_phone,
+                shipping_address: body.shipping_address,
+                billing_address: body.billing_address,
+            }
+        });
+        return NextResponse.json(customer, { status: 201 });
+    } catch (error) {
+        console.error('Error creating customer:', error);
+        return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 });
+    }
+}

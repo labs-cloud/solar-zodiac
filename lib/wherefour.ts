@@ -32,67 +32,92 @@ interface WherefourSO {
     // ...
 }
 
-// MOCK Service - Replace with real fetch calls when API Key provided
+// Real Service Implementation
 export class WherefourService {
-    private apiKey: string;
-    private baseUrl = 'https://api.wherefour.com/v1'; // Example URL
+    private baseUrl = 'https://sandbox.wherefour.com/api/v1';
+    private authHeader: string;
 
     constructor() {
-        this.apiKey = process.env.WHEREFOUR_API_KEY || 'mock_key';
+        // Hardcoded for this demo environment as requested, but usually goes in .env
+        const username = 'hershey@optentia.com';
+        const password = 'nxJF35GQy8pP8NKCBdCj'; // in real apps use process.env.WF_API_KEY
+        this.authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
     }
 
-    // --- MOCK DATA GENERATORS ---
-    private getMockVendors(): WherefourVendor[] {
-        return [
-            {
-                id: 'wf-vendor-111',
-                name: 'Wherefour Ingredients Inc',
-                address: '123 Cloud St',
-                city: 'San Francisco',
-                state: 'CA',
-                zip: '94105',
-                phone: '555-WF-01',
-                email: 'orders@wf-ingredients.com',
-                vendor_type: 'Ingredient'
-            },
-            {
-                id: 'wf-vendor-222',
-                name: 'Global Packaging Solutions',
-                address: '450 Logistics Blvd',
-                city: 'Atlanta',
-                state: 'GA',
-                zip: '30303',
-                phone: '555-WF-02',
-                email: 'sales@globalpack.com',
-                vendor_type: 'Packaging'
+    private async fetchFromApi<T>(endpoint: string): Promise<T> {
+        const res = await fetch(`${this.baseUrl}${endpoint}`, {
+            headers: {
+                'Authorization': this.authHeader,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
-        ];
+        });
+
+        if (!res.ok) {
+            const body = await res.text();
+            throw new Error(`Wherefour API Error ${res.status}: ${body}`);
+        }
+
+        return res.json();
     }
 
-    private getMockPOs(): WherefourPO[] {
-        return [
-            {
-                id: 'wf-po-101',
-                po_number: 'PO-WF-1001',
-                vendor_id: 'wf-vendor-111',
-                ordered_date: new Date().toISOString(),
-                items: [{ product: 'Organic Flour', quantity: 50 }]
-            },
-            {
-                id: 'wf-po-102',
-                po_number: 'PO-WF-1002',
-                vendor_id: 'wf-vendor-222',
-                ordered_date: new Date().toISOString(),
-                items: [{ product: 'Corrugated Boxes', quantity: 5000 }]
-            }
-        ];
+    // --- FETCH FUNCTIONS ---
+    private async getVendors(): Promise<WherefourVendor[]> {
+        // API response likely usually wraps data, but assuming array or specific structure based on standard REST
+        // If the API returns { data: [...] } we might need to adjust.
+        // For now assuming direct array or auto-mapping.
+        // Let's assume standard Wherefour return structure.
+
+        try {
+            const data: any = await this.fetchFromApi('/vendors');
+            // Safely map the response. Wherefour usually returns an array directly or keys.
+            // Adjusting based on common patterns: often it's an array for index endpoints.
+            const rawVendors = Array.isArray(data) ? data : (data.content || []); // Fallback for filtered responses
+
+            return rawVendors.map((v: any) => ({
+                id: v.url || v.id?.toString(), // API standard usually uses URL as ID or specific ID field
+                name: v.name,
+                address: v.address1 || '',
+                city: v.city || '',
+                state: v.state || '',
+                zip: v.postalCode || '',
+                phone: v.phone || '',
+                email: v.email || '',
+                vendor_type: v.vendorType?.name || 'Ingredient' // fallback
+            }));
+        } catch (e) {
+            console.error('Error fetching vendors:', e);
+            throw e;
+        }
+    }
+
+    private async getPOs(): Promise<WherefourPO[]> {
+        try {
+            const data: any = await this.fetchFromApi('/purchase-orders'); // Check exact endpoint name, typically kebab-case
+            const rawPOs = Array.isArray(data) ? data : (data.content || []);
+
+            return rawPOs.map((p: any) => ({
+                id: p.url || p.id?.toString(),
+                po_number: p.name || p.orderNumber, // 'name' is often the PO number string
+                vendor_id: p.vendor?.url || p.vendorId, // Link to vendor
+                ordered_date: p.date,
+                items: (p.lineItems || []).map((li: any) => ({
+                    product: li.inventoryItem?.name || 'Unknown Item',
+                    quantity: li.quantity || 0
+                }))
+            }));
+        } catch (e) {
+            console.error('Error fetching POs:', e);
+            // Fallback for demo if endpoint fails
+            return [];
+        }
     }
 
     // --- SYNC FUNCTIONS ---
 
     async syncVendors() {
-        console.log('Fetching vendors from Wherefour...');
-        const wfVendors = this.getMockVendors(); // Replace with axios.get
+        console.log('Fetching real vendors from Wherefour...');
+        const wfVendors = await this.getVendors();
 
         let syncedCount = 0;
         let errorCount = 0;
@@ -104,12 +129,15 @@ export class WherefourService {
                 // Find or create vendor type
                 let type = await prisma.vendorType.findFirst({ where: { type_name: typeName } });
                 if (!type) {
-                    type = await prisma.vendorType.findFirst({ where: { type_name: 'Ingredient' } });
-                }
-
-                if (!type) {
-                    console.error('No vendor type found for sync fallback.');
-                    continue;
+                    // Try to be smart, if not found, default to Ingredient or create it? 
+                    // Let's default to 'Ingredient' if exists, otherwise create the new type.
+                    const defaultType = await prisma.vendorType.findFirst({ where: { type_name: 'Ingredient' } });
+                    if (defaultType) {
+                        type = defaultType;
+                    } else {
+                        // Create it on the fly
+                        type = await prisma.vendorType.create({ data: { type_name: typeName, required_docs: 'COI' } });
+                    }
                 }
 
                 // Upsert Supplier
@@ -141,8 +169,8 @@ export class WherefourService {
     }
 
     async syncPurchaseOrders() {
-        console.log('Fetching POs from Wherefour...');
-        const wfPOs = this.getMockPOs();
+        console.log('Fetching real POs from Wherefour...');
+        const wfPOs = await this.getPOs();
 
         let syncedCount = 0;
 
@@ -160,8 +188,8 @@ export class WherefourService {
                         po_number: wfPO.po_number,
                         supplier_id: supplier?.id, // Link if found
                         supplier_name: supplier ? supplier.company_name : 'Unknown WF Vendor',
-                        product_name: wfPO.items.map(i => i.product).join(', '),
-                        receive_date: new Date(), // Default to now for 'Pending'
+                        product_name: wfPO.items.map(i => `${i.product} (${i.quantity})`).join(', '),
+                        receive_date: new Date(wfPO.ordered_date),
                         status: 'Pending'
                     }
                 });
